@@ -75,13 +75,31 @@ class UserService {
     @Transactional
     public void deleteUsers(DeleteUsersCommand command) {
         log.info("Deleting users: {}", command);
-        List<UserEntity> users = userRepository.findByIdIn(command.getIds());
+        Set<Long> ids = command.getIds();
+        List<UserEntity> users = userRepository.findByIdIn(ids);
+
+        validateForDeletion(ids, users);
+
         users.forEach(UserEntity::markAsDeleted);
     }
 
     public Page<UserDTO> listUsers(Pageable pageable) {
         return userRepository.findAll(pageable)
                 .map(UserDTO::fromEntity);
+    }
+
+    private void validateForDeletion(Set<Long> ids, List<UserEntity> users) {
+        Map<Long, UserEntity> userIdsToUsers = users.stream()
+                .collect(toMap(UserEntity::getId, Function.identity()));
+
+        Set<Long> nonExistentIds = ids.stream()
+                .filter(id -> !userIdsToUsers.containsKey(id))
+                .collect(toSet());
+
+        if (!nonExistentIds.isEmpty()) {
+            String joinedIds = joinIds(nonExistentIds);
+            throw new RequestValidationException("Attempted to delete non existent users with ids: " + joinedIds);
+        }
     }
 
     private List<UserDTO> toDTOs(List<UserEntity> userEntities) {
@@ -149,10 +167,14 @@ class UserService {
                 .map(Map.Entry::getKey)
                 .collect(toSet());
         if (!idsForNonUniqueUpdates.isEmpty()) {
-            String joinedNonUniqueIds = idsForNonUniqueUpdates.stream().map(String::valueOf)
-                    .collect(joining(","));
+            String joinedNonUniqueIds = joinIds(idsForNonUniqueUpdates);
             throw new RequestValidationException(format("Attempted to update more than once users with ids: %s", joinedNonUniqueIds));
         }
+    }
+
+    private String joinIds(Set<Long> ids) {
+        return ids.stream().map(String::valueOf)
+                .collect(joining(","));
     }
 
     private void sendWelcomeNotifications(List<UserEntity> registeredUsers) {

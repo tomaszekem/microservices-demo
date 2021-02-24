@@ -32,6 +32,23 @@ class UserServiceSpec extends Specification {
         ex.message == 'Following emails are already in use: ' + userEmail
     }
 
+    def 'should not allow to delete non existent user'() {
+        given:
+        def userId = 1L
+        def userIds = Set.of(userId)
+        def deleteUsersCommand = new DeleteUsersCommand(userIds)
+
+        userRepository.findByIdIn(userIds) >> List.of()
+
+        when:
+        userService.deleteUsers(deleteUsersCommand)
+
+        then:
+        def ex = thrown(RequestValidationException)
+        ex.message == 'Attempted to delete non existent users with ids: ' + userId
+
+    }
+
     def 'should not allow to register users when same email is used in the the batch'() {
         given:
         def userEmail = 'j.doe@acme.com'
@@ -120,10 +137,11 @@ class UserServiceSpec extends Specification {
 
     def 'should delete users with given ids'() {
         given:
-        def ids = [1].toSet()
+        def userId = 1L
+        def ids = [userId].toSet()
         def command = new DeleteUsersCommand(ids)
 
-        def existingUser = user('John', 'Doe', 'j.doe@amce.com', 1)
+        def existingUser = user('John', 'Doe', 'j.doe@amce.com', userId)
         userRepository.findByIdIn(ids) >> [existingUser]
         when:
         userService.deleteUsers(command)
