@@ -45,8 +45,7 @@ class UserServiceSpec extends Specification {
 
         then:
         def ex = thrown(RequestValidationException)
-        ex.message == 'Attempted to delete non existent users with ids: ' + userId
-
+        ex.message == 'Users with ids 1 do not exist'
     }
 
     def 'should not allow to register users when same email is used in the the batch'() {
@@ -91,6 +90,29 @@ class UserServiceSpec extends Specification {
             notificationCommands.size() == 1 && notificationCommands[0].to == userEmail && notificationCommands[0].subject == 'Welcome!' && notificationCommands[0].message == 'Welcome to our site'
         })
 
+    }
+
+    def 'should not allow to update non existent user'() {
+        given:
+        def userId = 1L
+        def userIds = Set.of(userId)
+        def updateCommand = new UpdateUserCommand(
+                id: userId,
+                firstName: 'New name',
+                lastName: 'New lastName',
+                email: 'newemail@acme.com'
+        )
+
+        def updateCommands = List.of(updateCommand)
+        userRepository.findByEmails(_ as Set<String>) >> List.of()
+        userRepository.findByIdIn(userIds) >> List.of()
+
+        when:
+        userService.updateUsers(updateCommands)
+
+        then:
+        def ex = thrown(RequestValidationException)
+        ex.message == 'Users with ids 1 do not exist'
     }
 
     def 'should block attempt of updating same user in the same bulk'() {

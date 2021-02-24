@@ -50,12 +50,12 @@ class UserService {
     @Transactional
     public List<UserDTO> updateUsers(List<UpdateUserCommand> commands) {
         log.info("Updating users: {}", commands);
-        validateUpdatedElementsUniqueness(commands);
         Set<Long> userIds = commands.stream()
                 .map(UpdateUserCommand::getId)
                 .collect(toSet());
 
         List<UserEntity> users = userRepository.findByIdIn(userIds);
+        validateForUpdate(commands, userIds, users);
         Map<Long, UpdateUserCommand> userIdsToCommands = commands.stream()
                 .collect(toMap(UpdateUserCommand::getId, Function.identity()));
 
@@ -78,7 +78,7 @@ class UserService {
         Set<Long> ids = command.getIds();
         List<UserEntity> users = userRepository.findByIdIn(ids);
 
-        validateForDeletion(ids, users);
+        validateExistenceByIds(ids, users);
 
         users.forEach(UserEntity::markAsDeleted);
     }
@@ -88,7 +88,12 @@ class UserService {
                 .map(UserDTO::fromEntity);
     }
 
-    private void validateForDeletion(Set<Long> ids, List<UserEntity> users) {
+    private void validateForUpdate(List<UpdateUserCommand> commands, Set<Long> userIds, List<UserEntity> users) {
+        validateUpdatedElementsUniqueness(commands);
+        validateExistenceByIds(userIds, users);
+    }
+
+    private void validateExistenceByIds(Set<Long> ids, List<UserEntity> users) {
         Map<Long, UserEntity> userIdsToUsers = users.stream()
                 .collect(toMap(UserEntity::getId, Function.identity()));
 
@@ -98,7 +103,7 @@ class UserService {
 
         if (!nonExistentIds.isEmpty()) {
             String joinedIds = joinIds(nonExistentIds);
-            throw new RequestValidationException("Attempted to delete non existent users with ids: " + joinedIds);
+            throw new RequestValidationException(format("Users with ids %s do not exist", joinedIds));
         }
     }
 
