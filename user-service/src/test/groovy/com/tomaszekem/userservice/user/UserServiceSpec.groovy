@@ -115,6 +115,35 @@ class UserServiceSpec extends Specification {
         ex.message == 'Users with ids 1 do not exist'
     }
 
+    def 'should update user with new values'() {
+        given:
+        def userId = 1L
+        def ids = [userId].toSet()
+        def newEmail = 'newemail@acme.com'
+        def updateCommand = new UpdateUserCommand(
+                id: userId,
+                firstName: 'New name',
+                lastName: 'New lastName',
+                email: newEmail
+        )
+
+        def commands = [updateCommand]
+
+        def existingUser = user('John', 'Doe', 'j.doe@amce.com', userId)
+        userRepository.findByIdIn(ids) >> [existingUser]
+        userRepository.findByEmails(Set.of(newEmail)) >> []
+
+        when:
+        def updatedUser = userService.updateUsers(commands)[0]
+
+        then:
+        updatedUser.id == updateCommand.id
+        updatedUser.firstName == updateCommand.firstName
+        updatedUser.lastName == updateCommand.lastName
+        updatedUser.email == updateCommand.email
+
+    }
+
     def 'should block attempt of updating same user in the same bulk'() {
         given:
         def userId = 1
