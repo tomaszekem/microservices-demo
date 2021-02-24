@@ -30,6 +30,8 @@ notification-service knows from which account email notifications will be sent.
 ```bash
 ./mvnw -ntp -Pprod verify jib:dockerBuild
 ```
+**WARNING - Please make sure that entrypoint.sh, .env,  files have LF line separators - this is necessary for the containers to work**
+
 You can use -DskipTests flag to omit the tests execution.
 Once all the services are built, cd into the docker-compose directory and run them:
 ```bash
