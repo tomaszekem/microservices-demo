@@ -5,6 +5,8 @@ import com.tomaszekem.userservice.notification.NotificationService;
 import com.tomaszekem.userservice.notification.SendEmailNotificationCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -75,6 +77,11 @@ class UserService {
         log.info("Deleting users: {}", command);
         List<UserEntity> users = userRepository.findByIdIn(command.getIds());
         users.forEach(UserEntity::markAsDeleted);
+    }
+
+    public Page<UserDTO> listUsers(Pageable pageable) {
+        return userRepository.findAll(pageable)
+                .map(UserDTO::fromEntity);
     }
 
     private List<UserDTO> toDTOs(List<UserEntity> userEntities) {

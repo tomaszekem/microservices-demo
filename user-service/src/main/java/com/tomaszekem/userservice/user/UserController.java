@@ -1,5 +1,7 @@
 package com.tomaszekem.userservice.user;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -32,6 +34,13 @@ class UserController {
     @PutMapping
     ResponseEntity<List<UserDTO>> updateUsers(@RequestBody @Size(min = 1, max = BULK_MAX_SIZE) List<@Valid UpdateUserCommand> commands) {
         List<UserDTO> result = userService.updateUsers(commands);
+        return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
+
+    @GetMapping
+    ResponseEntity<Page<UserDTO>> listUsers(PaginationParams paginationParams) {
+        var pageRequest = PageRequest.of(paginationParams.getPage(), paginationParams.getPerPage());
+        Page<UserDTO> result = userService.listUsers(pageRequest);
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
