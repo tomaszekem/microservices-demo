@@ -13,6 +13,7 @@ User-service handles bulk operations on users:
 - registration
 - edition
 - deletion (soft deletion)
+- read
 
 The service uses an in-memory H2 database (for simplicity as this is a demo project)
 
