@@ -6,7 +6,7 @@ The projects consist of two services:
 1. user-service
 2. notification-service
 
-The services are built using Sprint Boot and Java 11.
+The services are built using Spring Boot and Java 11.
 
 ### user-service
 User-service handles bulk operations on users:
