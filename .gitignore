@@ -1,0 +1,5 @@
+/.idea/
+notification-service/.mvn
+user-service/.mvn
+/notification-service/target/
+/user-service/target/

@@ -1,0 +1,19 @@
+version: '2'
+services:
+  notification-service-app:
+    image: notification-service
+    environment:
+      - _JAVA_OPTIONS=-Xmx512m -Xms256m
+      - SPRING_PROFILES_ACTIVE=prod,swagger
+      - KAFKA_BOOTSTRAPSERVERS=kafka:9093
+      - SPRING_KAFKA_BOOTSTRAPSERVERS=kafka:9093
+  kafka:
+    extends:
+      file: kafka.yml
+      service: kafka
+    environment:
+      - KAFKA_ADVERTISED_HOST_NAME=kafka
+  zookeeper:
+    extends:
+      file: kafka.yml
+      service: zookeeper
